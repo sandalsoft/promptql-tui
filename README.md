@@ -1,100 +1,96 @@
-# Claude Code Template
+# PromptQL TUI
 
-A template repository for bootstrapping projects using Claude's code execution environment on claude.ai.
+A terminal user interface (TUI) client for the [Hasura PromptQL](https://hasura.io/docs/promptql/) API, built with Go and [Bubble Tea](https://github.com/charmbracelet/bubbletea).
 
-## How to Use
+Uses the [PromptQL Go SDK](https://github.com/sandalsoft/promptql-sdk-golang) for API communication.
 
-### 1. Create a new repo from this template
-- Click **"Use this template"** on GitHub
-- Name your new repo
-- Clone it or leave it on GitHub
+## Features
 
-### 2. Start a new conversation on claude.ai
+- **Project browser** — List and select your PromptQL projects
+- **Thread management** — Create new conversation threads or resume existing ones
+- **Interactive chat** — Send natural language queries to PromptQL and see responses inline
+- **Direct query mode** — Use an API key + DDN URL for stateless queries
+- **Persistent config** — Credentials saved to `~/.config/promptql-tui/config.json`
+- **Environment overrides** — Set `PROMPTQL_PAT`, `PROMPTQL_API_KEY`, `PROMPTQL_DDN_URL`
 
-Tell Claude:
+## Install
 
-> Clone https://github.com/YOUR_USERNAME/YOUR_NEW_REPO and build me a [your idea]
-
-Or if you just want to use the template without a GitHub repo:
-
-> Read the CLAUDE.md and flow commands from my template, then interview me about building [your idea]
-
-### 3. The Flow
-
-1. **Interview** — Claude asks you questions about the project
-2. **Plan** — Claude generates a detailed implementation plan
-3. **Execute** — Ralph (the autonomous executor) builds it step by step
-
-## Structure
-
-```
-├── CLAUDE.md                          # Project instructions for Claude
-├── .claude/
-│   ├── commands/                      # Slash commands (flow + skills)
-│   │   ├── flow-next-interview.md     # Discovery interview
-│   │   ├── flow-next-plan.md          # Plan generation
-│   │   ├── flow-next-init-ralph.md    # Autonomous execution
-│   │   └── *.md                       # 12 installed skill commands
-│   └── skills/                        # Supporting files for skills
-│       ├── session-handoff/           # Scripts & templates
-│       ├── qa-test-planner/           # Test case generators & references
-│       ├── c4-architecture/           # C4 syntax & pattern references
-│       ├── database-schema-designer/  # Schema checklists & templates
-│       ├── dependency-updater/        # Update scripts
-│       └── clean-web-design/          # Design tokens & component patterns
-├── scripts/ralph/
-│   ├── mark_done.py                   # Step tracking utility
-│   ├── steps.json                     # Machine-readable plan (generated)
-│   ├── logs/                          # Execution logs
-│   └── state/                         # State tracking
-├── docs/
-│   ├── interview-answers.md           # Interview output (generated)
-│   └── plugins.md                     # Plugin documentation
-├── scripts/
-│   ├── setup-plugins.sh               # Plugin installation script
-│   └── ralph/
-│       └── ...
-└── plan.md                            # Implementation plan (generated)
+```bash
+go install github.com/sandalsoft/promptql-tui/cmd/promptql-tui@latest
 ```
 
-## Flow Commands
+Or build from source:
 
-| Command | What it does |
-|---------|-------------|
-| `/flow-next-interview <idea>` | Structured discovery interview |
-| `/flow-next-plan` | Generate implementation plan |
-| `/flow-next-init-ralph` | Begin autonomous execution |
+```bash
+git clone https://github.com/sandalsoft/promptql-tui.git
+cd promptql-tui
+go build -o promptql-tui ./cmd/promptql-tui/
+```
 
-## Plugins
+## Usage
 
-Optional plugins for safety and continuity:
+```bash
+# Run with config file (interactive setup on first run)
+./promptql-tui
 
-| Plugin | Purpose | Install |
-|--------|---------|---------|
-| [Destructive Command Guard](https://github.com/Dicklesworthstone/destructive_command_guard) | Blocks dangerous commands before execution | `bash scripts/setup-plugins.sh` |
-| [Claude-Mem](https://github.com/thedotmack/claude-mem) | Persistent memory across sessions | `/plugin install claude-mem` |
+# Or set credentials via environment
+export PROMPTQL_PAT="your-personal-access-token"
+./promptql-tui
 
-Run `bash scripts/setup-plugins.sh` to install both, or see `docs/plugins.md` for details.
+# For direct query mode (no thread management)
+export PROMPTQL_API_KEY="your-api-key"
+export PROMPTQL_DDN_URL="https://your-project.ddn.hasura.app/graphql"
+./promptql-tui
+```
 
-## Installed Skills
+## Navigation
 
-This template comes with 12 pre-installed Claude Code skills:
+| View | Key | Action |
+|------|-----|--------|
+| All | `ctrl+c` | Quit |
+| All | `esc` | Go back |
+| Setup | `tab`/`shift+tab` | Navigate fields |
+| Setup | `enter` | Save and continue |
+| Projects | `j`/`k` or arrows | Navigate list |
+| Projects | `enter` | Select project |
+| Projects | `r` | Refresh |
+| Projects | `s` | Go to setup |
+| Threads | `j`/`k` or arrows | Navigate list |
+| Threads | `enter` | Select/resume thread |
+| Threads | `n` | New thread |
+| Threads | `r` | Refresh |
+| Chat | `ctrl+s` | Send message |
 
-| Command | Purpose |
-|---------|---------|
-| `/crafting-effective-readmes` | Write or improve README files matched to project type |
-| `/commit-work` | Review, stage, and create well-structured git commits |
-| `/game-changing-features` | Find 10x product opportunities and high-leverage improvements |
-| `/mermaid-diagrams` | Create software diagrams (class, sequence, flowchart, ERD, C4) |
-| `/napkin` | Per-repo learning file — tracks mistakes and patterns |
-| `/tailwind-v4-shadcn` | Set up Tailwind v4 + shadcn/ui with correct architecture |
-| `/session-handoff` | Create handoff documents for seamless session transfers |
-| `/qa-test-planner` | Generate test plans, test cases, regression suites, bug reports |
-| `/c4-architecture` | Generate C4 model architecture diagrams in Mermaid |
-| `/database-schema-designer` | Design SQL/NoSQL schemas with migrations and indexing |
-| `/dependency-updater` | Smart dependency management for any language |
-| `/clean-web-design` | Professional design system with HSL tokens and components |
+## Architecture
 
-## Customization
+```
+cmd/promptql-tui/    # Entry point
+internal/
+  config/            # Persistent configuration (~/.config/promptql-tui/)
+  sdk/               # Vendored PromptQL Go SDK
+  tui/               # Bubble Tea TUI (views, styles, messages)
+```
 
-Edit `CLAUDE.md` to add your own coding standards, preferred tech stack, or project-specific instructions. Add custom flow commands in `.claude/commands/`.
+## Configuration
+
+On first run, the TUI presents a setup screen to configure:
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| PAT | Yes | Hasura Personal Access Token |
+| API Key | No | Runtime API key for direct queries |
+| DDN URL | No | DDN GraphQL endpoint URL |
+| Timezone | No | Defaults to UTC |
+
+Config is stored at `~/.config/promptql-tui/config.json`.
+
+## SDK
+
+The embedded SDK (in `internal/sdk/`) is vendored from [sandalsoft/promptql-sdk-golang](https://github.com/sandalsoft/promptql-sdk-golang) and provides:
+
+- **Projects** — List, lookup, enable/disable PromptQL
+- **Threads** — Create, list, send messages, get events
+- **Query** — Execute natural language queries via REST
+- **Prompts** — CRUD operations on sample prompts
+- **API Keys** — Generate and manage runtime API keys
+- **Users** — List and lookup PromptQL users

@@ -9,7 +9,7 @@ venv/
 dist/
 build/
 *.egg-info/
-promptql-tui
+/promptql-tui
 
 # IDE
 .vscode/

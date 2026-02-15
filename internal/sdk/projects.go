@@ -52,13 +52,16 @@ func (r *ProjectsResource) GetPlaygroundConfig(projectID string) (*PlaygroundCon
 }
 
 // ListUserProjects lists all projects visible to the authenticated user
-// by querying the DDN control-plane API.
+// by querying the DDN control-plane API, including their latest build FQDN.
 func (r *ProjectsResource) ListUserProjects() ([]UserProject, error) {
 	query := `
 		query ListProjects {
 			ddn_projects(order_by: {created_at: desc}) {
 				id
 				name
+				ddn_builds(limit: 1, order_by: {created_at: desc}) {
+					fqdn
+				}
 			}
 		}`
 	data, err := r.client.GraphQLControlPlane(query, nil, "pat")
@@ -66,17 +69,25 @@ func (r *ProjectsResource) ListUserProjects() ([]UserProject, error) {
 		return nil, err
 	}
 	var ddnProjects []struct {
-		ID   string `json:"id"`
-		Name string `json:"name"`
+		ID     string `json:"id"`
+		Name   string `json:"name"`
+		Builds []struct {
+			FQDN string `json:"fqdn"`
+		} `json:"ddn_builds"`
 	}
 	if err := decodeJSONField(data, "ddn_projects", &ddnProjects); err != nil {
 		return nil, err
 	}
 	projects := make([]UserProject, len(ddnProjects))
 	for i, p := range ddnProjects {
+		fqdn := ""
+		if len(p.Builds) > 0 {
+			fqdn = p.Builds[0].FQDN
+		}
 		projects[i] = UserProject{
 			Name:         p.Name,
 			DDNProjectID: p.ID,
+			BuildFQDN:    fqdn,
 		}
 	}
 	return projects, nil

@@ -25,6 +25,8 @@ type ClientOptions struct {
 	APIURL string
 	// AuthURL is the base URL of the authentication service.
 	AuthURL string
+	// ControlPlaneURL is the base URL of the DDN control-plane API for project listing.
+	ControlPlaneURL string
 	// Timeout is the HTTP request timeout.
 	Timeout time.Duration
 	// HTTPClient allows injecting a custom *http.Client (useful for testing).
@@ -33,13 +35,14 @@ type ClientOptions struct {
 
 // Client is the main entry point for the PromptQL SDK.
 type Client struct {
-	pat       string
-	apiKey    string
-	ProjectID string
-	baseURL   string
-	apiURL    string
-	authURL   string
-	http      *http.Client
+	pat             string
+	apiKey          string
+	ProjectID       string
+	baseURL         string
+	apiURL          string
+	authURL         string
+	controlPlaneURL string
+	http            *http.Client
 
 	projects *ProjectsResource
 	prompts  *PromptsResource
@@ -63,6 +66,10 @@ func NewClient(opts ClientOptions) *Client {
 	if authURL == "" {
 		authURL = "https://auth.pro.hasura.io"
 	}
+	controlPlaneURL := opts.ControlPlaneURL
+	if controlPlaneURL == "" {
+		controlPlaneURL = "https://data.pro.hasura.io"
+	}
 	timeout := opts.Timeout
 	if timeout == 0 {
 		timeout = 30 * time.Second
@@ -74,13 +81,14 @@ func NewClient(opts ClientOptions) *Client {
 	}
 
 	c := &Client{
-		pat:       opts.PAT,
-		apiKey:    opts.APIKey,
-		ProjectID: opts.ProjectID,
-		baseURL:   baseURL,
-		apiURL:    apiURL,
-		authURL:   authURL,
-		http:      httpClient,
+		pat:             opts.PAT,
+		apiKey:          opts.APIKey,
+		ProjectID:       opts.ProjectID,
+		baseURL:         baseURL,
+		apiURL:          apiURL,
+		authURL:         authURL,
+		controlPlaneURL: controlPlaneURL,
+		http:            httpClient,
 	}
 
 	c.projects = &ProjectsResource{client: c}
@@ -182,6 +190,16 @@ type graphqlResponse struct {
 
 // GraphQL executes a GraphQL query/mutation and returns the data field.
 func (c *Client) GraphQL(query string, variables map[string]interface{}, authType string) (map[string]interface{}, error) {
+	return c.graphqlTo(c.baseURL+"/graphql", query, variables, authType)
+}
+
+// GraphQLControlPlane executes a GraphQL query against the DDN control-plane API.
+func (c *Client) GraphQLControlPlane(query string, variables map[string]interface{}, authType string) (map[string]interface{}, error) {
+	return c.graphqlTo(c.controlPlaneURL+"/v1/graphql", query, variables, authType)
+}
+
+// graphqlTo executes a GraphQL query/mutation against the given endpoint URL.
+func (c *Client) graphqlTo(endpoint string, query string, variables map[string]interface{}, authType string) (map[string]interface{}, error) {
 	auth, err := c.authHeader(authType)
 	if err != nil {
 		return nil, err
@@ -193,7 +211,7 @@ func (c *Client) GraphQL(query string, variables map[string]interface{}, authTyp
 		return nil, fmt.Errorf("marshaling request: %w", err)
 	}
 
-	req, err := http.NewRequest("POST", c.baseURL+"/graphql", bytes.NewReader(body))
+	req, err := http.NewRequest("POST", endpoint, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
 	}

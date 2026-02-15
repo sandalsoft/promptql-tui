@@ -355,6 +355,12 @@ func (m Model) updateProjects(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case lookupResultMsg:
 		m.buildFQDN = msg.result.BuildFQDN
+		// Populate project ID from the lookup result
+		if m.selectedProject != nil {
+			m.selectedProject.ProjectID = msg.result.ProjectID
+			m.selectedProject.BuildFQDN = msg.result.BuildFQDN
+		}
+		m.cfg.ProjectID = msg.result.ProjectID
 		m.loading = false
 		// Now load threads
 		m.view = viewThreads
@@ -398,11 +404,10 @@ func (m Model) updateProjects(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) selectProject() (tea.Model, tea.Cmd) {
 	p := m.projects[m.projectCursor]
 	m.selectedProject = &p
-	m.cfg.ProjectID = p.ProjectID
 	m.loading = true
 	m.err = nil
 
-	return m, tea.Batch(m.spinner.Tick, m.lookupProject(p.ProjectID))
+	return m, tea.Batch(m.spinner.Tick, m.lookupProjectByName(p.Name))
 }
 
 // --- Threads View ---
@@ -754,6 +759,18 @@ func (m Model) lookupProject(projectID string) tea.Cmd {
 	return func() tea.Msg {
 		result, err := m.client.Projects().Lookup(sdk.LookupOptions{
 			ProjectID: projectID,
+		})
+		if err != nil {
+			return errMsg{err}
+		}
+		return lookupResultMsg{result}
+	}
+}
+
+func (m Model) lookupProjectByName(projectName string) tea.Cmd {
+	return func() tea.Msg {
+		result, err := m.client.Projects().Lookup(sdk.LookupOptions{
+			ProjectName: projectName,
 		})
 		if err != nil {
 			return errMsg{err}

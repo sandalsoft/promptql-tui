@@ -325,7 +325,31 @@ func (m Model) viewProjects() string {
 	b.WriteString(subtitleStyle.Render(fmt.Sprintf("%d projects found", len(m.projects))))
 	b.WriteString("\n\n")
 
-	for i, p := range m.projects {
+	// Calculate visible window: header takes ~4 lines, footer takes ~2 lines
+	maxVisible := m.height - 6
+	if maxVisible < 3 {
+		maxVisible = 3
+	}
+	if maxVisible > len(m.projects) {
+		maxVisible = len(m.projects)
+	}
+
+	// Determine scroll offset to keep cursor visible
+	scrollOffset := 0
+	if m.projectCursor >= maxVisible {
+		scrollOffset = m.projectCursor - maxVisible + 1
+	}
+	end := scrollOffset + maxVisible
+	if end > len(m.projects) {
+		end = len(m.projects)
+		scrollOffset = end - maxVisible
+		if scrollOffset < 0 {
+			scrollOffset = 0
+		}
+	}
+
+	for i := scrollOffset; i < end; i++ {
+		p := m.projects[i]
 		cursor := "  "
 		style := normalItemStyle
 		if i == m.projectCursor {
@@ -340,8 +364,13 @@ func (m Model) viewProjects() string {
 		b.WriteString("\n")
 	}
 
+	if end < len(m.projects) {
+		b.WriteString(helpStyle.Render(fmt.Sprintf("  ... %d more below", len(m.projects)-end)))
+		b.WriteString("\n")
+	}
+
 	b.WriteString("\n")
-	b.WriteString(helpStyle.Render("j/k or arrows: navigate  |  enter: select  |  s: setup  |  ctrl+c: quit"))
+	b.WriteString(helpStyle.Render("↑/↓: navigate  |  enter: select  |  s: setup  |  ctrl+c: quit"))
 	return b.String()
 }
 
@@ -407,7 +436,7 @@ func (m Model) selectProject() (tea.Model, tea.Cmd) {
 	m.loading = true
 	m.err = nil
 
-	return m, tea.Batch(m.spinner.Tick, m.lookupProjectByName(p.Name))
+	return m, tea.Batch(m.spinner.Tick, m.lookupProjectByName(p.Name, p.BuildFQDN))
 }
 
 // --- Threads View ---
@@ -467,7 +496,7 @@ func (m Model) viewThreads() string {
 	}
 
 	b.WriteString("\n")
-	b.WriteString(helpStyle.Render("j/k or arrows: navigate  |  enter: select  |  n: new thread  |  esc: back  |  ctrl+c: quit"))
+	b.WriteString(helpStyle.Render("↑/↓: navigate  |  enter: select  |  n: new thread  |  esc: back  |  ctrl+c: quit"))
 	return b.String()
 }
 
@@ -767,10 +796,11 @@ func (m Model) lookupProject(projectID string) tea.Cmd {
 	}
 }
 
-func (m Model) lookupProjectByName(projectName string) tea.Cmd {
+func (m Model) lookupProjectByName(projectName string, fqdn string) tea.Cmd {
 	return func() tea.Msg {
 		result, err := m.client.Projects().Lookup(sdk.LookupOptions{
 			ProjectName: projectName,
+			FQDN:        fqdn,
 		})
 		if err != nil {
 			return errMsg{err}

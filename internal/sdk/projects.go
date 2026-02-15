@@ -51,26 +51,35 @@ func (r *ProjectsResource) GetPlaygroundConfig(projectID string) (*PlaygroundCon
 	return &result, nil
 }
 
-// ListUserProjects lists all projects visible to the authenticated user.
+// ListUserProjects lists all projects visible to the authenticated user
+// by querying the DDN control-plane API.
 func (r *ProjectsResource) ListUserProjects() ([]UserProject, error) {
 	query := `
-		query ListUserProjects {
-			getUserProjects {
-				buildFqdn
-				ddnProjectId
+		query ListProjects {
+			ddn_projects(order_by: {created_at: desc}) {
+				id
 				name
-				projectId
 			}
 		}`
-	data, err := r.client.GraphQL(query, nil, "pat")
+	data, err := r.client.GraphQLControlPlane(query, nil, "pat")
 	if err != nil {
 		return nil, err
 	}
-	var result []UserProject
-	if err := decodeJSONField(data, "getUserProjects", &result); err != nil {
+	var ddnProjects []struct {
+		ID   string `json:"id"`
+		Name string `json:"name"`
+	}
+	if err := decodeJSONField(data, "ddn_projects", &ddnProjects); err != nil {
 		return nil, err
 	}
-	return result, nil
+	projects := make([]UserProject, len(ddnProjects))
+	for i, p := range ddnProjects {
+		projects[i] = UserProject{
+			Name:         p.Name,
+			DDNProjectID: p.ID,
+		}
+	}
+	return projects, nil
 }
 
 // LookupOptions configures a project lookup.

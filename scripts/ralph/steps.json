@@ -4,83 +4,83 @@
     "phase": "test-infrastructure",
     "task": "Create internal/sdk/mock_transport_test.go with mockRoundTripper and newTestClient helper for interface-based HTTP mocking",
     "files": ["internal/sdk/mock_transport_test.go"],
-    "done": false
+    "done": true
   },
   {
     "id": 2,
     "phase": "sdk-tests-projects",
     "task": "Create internal/sdk/projects_test.go with ListUserProjects tests: success, auth error, runtime error, malformed response",
     "files": ["internal/sdk/projects_test.go"],
-    "done": false
+    "done": true
   },
   {
     "id": 3,
     "phase": "sdk-tests-projects",
     "task": "Add GetConfig tests to internal/sdk/projects_test.go: success, auth error, runtime error, malformed response",
     "files": ["internal/sdk/projects_test.go"],
-    "done": false
+    "done": true
   },
   {
     "id": 4,
     "phase": "sdk-tests-projects",
     "task": "Add GetPlaygroundConfig tests to internal/sdk/projects_test.go: success, auth error, runtime error, malformed response",
     "files": ["internal/sdk/projects_test.go"],
-    "done": false
+    "done": true
   },
   {
     "id": 5,
     "phase": "sdk-tests-threads",
     "task": "Create internal/sdk/threads_test.go with List tests: success, empty, auth error, runtime error, malformed response",
     "files": ["internal/sdk/threads_test.go"],
-    "done": false
+    "done": true
   },
   {
     "id": 6,
     "phase": "config-tests",
     "task": "Create internal/config/config_test.go with Load, Save, HasCredentials tests using temp directories",
     "files": ["internal/config/config_test.go"],
-    "done": false
+    "done": true
   },
   {
     "id": 7,
     "phase": "tui-tests",
     "task": "Create internal/tui/app_test.go with view state transition tests: New with/without credentials, esc key navigation",
     "files": ["internal/tui/app_test.go"],
-    "done": false
+    "done": true
   },
   {
     "id": 8,
     "phase": "tui-tests",
     "task": "Add project list behavior tests to internal/tui/app_test.go: loaded, navigation, error, empty state",
     "files": ["internal/tui/app_test.go"],
-    "done": false
+    "done": true
   },
   {
     "id": 9,
     "phase": "tui-tests",
     "task": "Add thread list behavior tests to internal/tui/app_test.go: loaded, navigation, error, new thread selection",
     "files": ["internal/tui/app_test.go"],
-    "done": false
+    "done": true
   },
   {
     "id": 10,
     "phase": "ci-pipeline",
     "task": "Create .github/workflows/test.yml with test and lint jobs: go test, go vet, golangci-lint, staticcheck",
     "files": [".github/workflows/test.yml"],
-    "done": false
+    "done": true
   },
   {
     "id": 11,
     "phase": "validation",
     "task": "Run go vet and go test -v -race locally, fix any failures",
     "files": [],
-    "done": false
+    "done": true
   },
   {
     "id": 12,
     "phase": "validation",
     "task": "Run go build to verify no compilation errors, verify test count matches expectations (~30+ tests)",
     "files": [],
-    "done": false
+    "done": true
   }
 ]
